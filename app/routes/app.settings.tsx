@@ -641,7 +641,21 @@ export default function SettingsPage() {
       case 2:
         return <Text as="p">Email settings content goes here</Text>;
       case 3:
-        return <Text as="p">Style settings content goes here</Text>;
+        return (
+          <div style={{ paddingTop: "24px" }}>
+            <Banner tone="info" title="More style options coming soon!">
+              <Text as="p">
+                We're working on adding more style options. For now, you can adjust preorder message and badge styles in{" "}
+                <Link url="/app/settings" onClick={() => setSelectedTab(0)}>
+                  Default Settings
+                </Link>{" "}
+                or the Product Variant page. Need custom styling?{" "}
+                <Link url="mailto:support@preordernow.com">Contact us</Link>
+                —we'll do it for free!
+              </Text>
+            </Banner>
+          </div>
+        );
       default:
         return null;
     }
