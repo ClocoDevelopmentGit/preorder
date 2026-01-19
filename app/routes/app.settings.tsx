@@ -66,7 +66,39 @@ export default function SettingsPage() {
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [shopTimezone, setShopTimezone] = useState("GMT-05:00");
+  const [selectedTheme, setSelectedTheme] = useState("default");
+  const [selectors, setSelectors] = useState({
+    cartSubtotal: "",
+    checkoutButton: "",
+    formSelector: "form[action^='/cart/add']",
+    buttonSelector: "form[action^='/cart/add']:first [type=submit]:visible",
+    productPageImage: "div.product-single__photos:first,#slider-product-template",
+    collectionPageGrid: "",
+    variantSelector: "form[action^='/cart/add']:first select:visible, .radio",
+    partialPreorderNotice: "",
+    mutationIds: "",
+    mutationClasses: "",
+    lineItemOriginalPrice: "",
+    lineItemTotalPrice: "",
+    ajaxLineItemOriginalPrice: "",
+    ajaxLineItemTotalPrice: "",
+    ajaxCartItemKey: "",
+    productPagePrice: "",
+    notifyAlertButton: "",
+    productLinkSelector: "a[href*='/products/']:visible",
+    productLinkSelectorFilter: "img",
+    productContainerHandle: "a[href*='products/{{handle}}']",
+    productContainerHandleFilter: "img",
+    productContainerHandleSecondFilter: "div, li, article, figure",
+  });
 
+  const handleSelectorChange = useCallback(
+    (key: string, value: string) => {
+      setSelectors((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
   const [products, setProducts] = useState<any[]>([]);
 
   const [previewProduct, setPreviewProduct] = useState<any>(null);
@@ -695,7 +727,394 @@ export default function SettingsPage() {
         );
 
       case 1:
-        return <Text as="p">Advanced settings content goes here</Text>;
+        return (
+          <>
+            {/* Time Zone Section */}
+            <div style={{ paddingTop: "24px" }}>
+              <InlineGrid columns={{ xs: "1fr", md: "2fr 5fr" }} gap="400">
+                <Box paddingInline={{ xs: "400", sm: "0" }}>
+                  <BlockStack gap="200">
+                    <Text as="h2" variant="headingMd">
+                      Time Zone
+                    </Text>
+                  </BlockStack>
+                </Box>
+
+                <Card background="bg-surface" padding="400" borderRadius="300">
+                  <BlockStack gap="400">
+                    <Select
+                      label="Shop Timezone"
+                      options={[
+                        { label: "(GMT-12:00) International Date Line West", value: "GMT-12:00" },
+                        { label: "(GMT-11:00) Midway Island, Samoa", value: "GMT-11:00" },
+                        { label: "(GMT-10:00) Hawaii", value: "GMT-10:00" },
+                        { label: "(GMT-09:00) Alaska", value: "GMT-09:00" },
+                        { label: "(GMT-08:00) Pacific Time (US & Canada)", value: "GMT-08:00" },
+                        { label: "(GMT-07:00) Mountain Time (US & Canada)", value: "GMT-07:00" },
+                        { label: "(GMT-06:00) Central Time (US & Canada)", value: "GMT-06:00" },
+                        { label: "(GMT-05:00) Eastern Time (US & Canada)", value: "GMT-05:00" },
+                        { label: "(GMT-04:00) Atlantic Time (Canada)", value: "GMT-04:00" },
+                        { label: "(GMT-03:00) Buenos Aires, Georgetown", value: "GMT-03:00" },
+                        { label: "(GMT-02:00) Mid-Atlantic", value: "GMT-02:00" },
+                        { label: "(GMT-01:00) Azores, Cape Verde Islands", value: "GMT-01:00" },
+                        { label: "(GMT+00:00) London, Dublin, Lisbon", value: "GMT+00:00" },
+                        { label: "(GMT+01:00) Paris, Berlin, Amsterdam", value: "GMT+01:00" },
+                        { label: "(GMT+02:00) Cairo, Athens, Istanbul", value: "GMT+02:00" },
+                        { label: "(GMT+03:00) Moscow, Kuwait, Baghdad", value: "GMT+03:00" },
+                        { label: "(GMT+04:00) Abu Dhabi, Muscat, Baku", value: "GMT+04:00" },
+                        { label: "(GMT+05:00) Karachi, Tashkent", value: "GMT+05:00" },
+                        { label: "(GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi", value: "GMT+05:30" },
+                        { label: "(GMT+06:00) Almaty, Dhaka", value: "GMT+06:00" },
+                        { label: "(GMT+07:00) Bangkok, Hanoi, Jakarta", value: "GMT+07:00" },
+                        { label: "(GMT+08:00) Beijing, Singapore, Hong Kong", value: "GMT+08:00" },
+                        { label: "(GMT+09:00) Tokyo, Seoul, Osaka", value: "GMT+09:00" },
+                        { label: "(GMT+10:00) Sydney, Melbourne, Brisbane", value: "GMT+10:00" },
+                        { label: "(GMT+11:00) Magadan, Solomon Islands", value: "GMT+11:00" },
+                        { label: "(GMT+12:00) Auckland, Wellington, Fiji", value: "GMT+12:00" },
+                      ]}
+                      value={shopTimezone}
+                      onChange={setShopTimezone}
+                    />
+                  </BlockStack>
+                </Card>
+              </InlineGrid>
+            </div>
+
+            {/* Theme Section */}
+            <div style={{ paddingTop: "24px" }}>
+              <InlineGrid columns={{ xs: "1fr", md: "2fr 5fr" }} gap="400">
+                <Box paddingInline={{ xs: "400", sm: "0" }}>
+                  <BlockStack gap="200">
+                    <Text as="h2" variant="headingMd">
+                      Theme
+                    </Text>
+                  </BlockStack>
+                </Box>
+
+                <Card background="bg-surface" padding="400" borderRadius="300">
+                  <BlockStack gap="400">
+                    <Select
+                      label="Select Theme"
+                      options={[
+                        { label: "Default", value: "default" },
+                        { label: "Dawn", value: "dawn" },
+                        { label: "Craft", value: "craft" },
+                        { label: "Sense", value: "sense" },
+                        { label: "Refresh", value: "refresh" },
+                        { label: "Colorblock", value: "colorblock" },
+                        { label: "Studio", value: "studio" },
+                        { label: "Ride", value: "ride" },
+                        { label: "Taste", value: "taste" },
+                        { label: "Publisher", value: "publisher" },
+                        { label: "Crave", value: "crave" },
+                        { label: "Origin", value: "origin" },
+                      ]}
+                      value={selectedTheme}
+                      onChange={setSelectedTheme}
+                    />
+                    <Text as="p" tone="subdued">
+                      Preferred theme not shown? Try "Default" or ask us to add your specific theme.
+                    </Text>
+                  </BlockStack>
+                </Card>
+              </InlineGrid>
+            </div>
+
+            {/* Selectors Section */}
+            <div style={{ paddingTop: "24px" }}>
+              <InlineGrid columns={{ xs: "1fr", md: "2fr 5fr" }} gap="400">
+                <Box paddingInline={{ xs: "400", sm: "0" }}>
+                  <BlockStack gap="200">
+                    <Text as="h2" variant="headingMd">
+                      Selectors
+                    </Text>
+                  </BlockStack>
+                </Box>
+
+                <Card background="bg-surface" padding="400" borderRadius="300">
+                  <BlockStack gap="500">
+                    {/* Row 1: Cart Subtotal & Checkout Button */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Cart Subtotal Selector"
+                        value={selectors.cartSubtotal}
+                        onChange={(value) => handleSelectorChange("cartSubtotal", value)}
+                        placeholder="Enter Cart Subtotal Selector"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Checkout Button Selector"
+                        value={selectors.checkoutButton}
+                        onChange={(value) => handleSelectorChange("checkoutButton", value)}
+                        placeholder="Enter Checkout Button Selector"
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 2: Form & Button Selector */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Form Selector"
+                        value={selectors.formSelector}
+                        onChange={(value) => handleSelectorChange("formSelector", value)}
+                        placeholder="form[action^='/cart/add']"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Button Selector"
+                        value={selectors.buttonSelector}
+                        onChange={(value) => handleSelectorChange("buttonSelector", value)}
+                        placeholder="form[action^='/cart/add']:first [type=submit]:visib"
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 3: Product Page Image & Collection Page Grid */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Product Page Image Container Selector"
+                        value={selectors.productPageImage}
+                        onChange={(value) => handleSelectorChange("productPageImage", value)}
+                        placeholder="div.product-single__photos:first,#slider-product-te"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Collection Page grid container selector"
+                        value={selectors.collectionPageGrid}
+                        onChange={(value) => handleSelectorChange("collectionPageGrid", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 4: Variant & Partial Preorder Notice */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Variant selector"
+                        value={selectors.variantSelector}
+                        onChange={(value) => handleSelectorChange("variantSelector", value)}
+                        placeholder="form[action^='/cart/add']:first select:visible, .radio"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Partial preorder notice placement selector"
+                        value={selectors.partialPreorderNotice}
+                        onChange={(value) => handleSelectorChange("partialPreorderNotice", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 5: Mutation IDs & Classes */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Mutation IDs"
+                        value={selectors.mutationIds}
+                        onChange={(value) => handleSelectorChange("mutationIds", value)}
+                        placeholder="Enter mutation IDs"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Mutation classes"
+                        value={selectors.mutationClasses}
+                        onChange={(value) => handleSelectorChange("mutationClasses", value)}
+                        placeholder="Enter mutation classes"
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 6: Line Item Original & Total Price */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <BlockStack gap="100">
+                        <TextField
+                          label="Line item original price selector"
+                          value={selectors.lineItemOriginalPrice}
+                          onChange={(value) => handleSelectorChange("lineItemOriginalPrice", value)}
+                          placeholder="Enter line item total price selector"
+                          autoComplete="off"
+                        />
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          Variables: {"{{ item.price | money }}"}
+                        </Text>
+                      </BlockStack>
+                      <BlockStack gap="100">
+                        <TextField
+                          label="Line item total price selector"
+                          value={selectors.lineItemTotalPrice}
+                          onChange={(value) => handleSelectorChange("lineItemTotalPrice", value)}
+                          placeholder="Enter line item total price selector"
+                          autoComplete="off"
+                        />
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          Variables: {"{{ item.price | money }}"}
+                        </Text>
+                      </BlockStack>
+                    </InlineGrid>
+
+                    {/* Row 7: Ajax Line Item Original & Total Price */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Ajax line item original price selector"
+                        value={selectors.ajaxLineItemOriginalPrice}
+                        onChange={(value) => handleSelectorChange("ajaxLineItemOriginalPrice", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Ajax line item total price selector"
+                        value={selectors.ajaxLineItemTotalPrice}
+                        onChange={(value) => handleSelectorChange("ajaxLineItemTotalPrice", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 8: Ajax Cart Item Key & Product Page Price */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Ajax cart item key variable name"
+                        value={selectors.ajaxCartItemKey}
+                        onChange={(value) => handleSelectorChange("ajaxCartItemKey", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Product page price selector"
+                        value={selectors.productPagePrice}
+                        onChange={(value) => handleSelectorChange("productPagePrice", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 9: Notify Alert Button (single) */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Notify alert button selector"
+                        value={selectors.notifyAlertButton}
+                        onChange={(value) => handleSelectorChange("notifyAlertButton", value)}
+                        placeholder="..."
+                        autoComplete="off"
+                      />
+                      <div></div>
+                    </InlineGrid>
+
+                    {/* Row 10: Product Link Selector & Filter */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Product link selector"
+                        value={selectors.productLinkSelector}
+                        onChange={(value) => handleSelectorChange("productLinkSelector", value)}
+                        placeholder="a[href*='/products/']:visible"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Product link selector filter"
+                        value={selectors.productLinkSelectorFilter}
+                        onChange={(value) => handleSelectorChange("productLinkSelectorFilter", value)}
+                        placeholder="img"
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 11: Product Container Handle Element */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Product container handle element selector"
+                        value={selectors.productContainerHandle}
+                        onChange={(value) => handleSelectorChange("productContainerHandle", value)}
+                        placeholder="a[href*='products/{{handle}}']"
+                        autoComplete="off"
+                      />
+                      <TextField
+                        label="Product container handle element selector Filter"
+                        value={selectors.productContainerHandleFilter}
+                        onChange={(value) => handleSelectorChange("productContainerHandleFilter", value)}
+                        placeholder="img"
+                        autoComplete="off"
+                      />
+                    </InlineGrid>
+
+                    {/* Row 12: Product Container Handle Second Filter (single) */}
+                    <InlineGrid columns={{ xs: "1fr", md: "1fr 1fr" }} gap="400">
+                      <TextField
+                        label="Product Container Handle Element Selector Second Filter"
+                        value={selectors.productContainerHandleSecondFilter}
+                        onChange={(value) => handleSelectorChange("productContainerHandleSecondFilter", value)}
+                        placeholder="div, li, article, figure"
+                        autoComplete="off"
+                      />
+                      <div></div>
+                    </InlineGrid>
+
+                    {/* Collection Page Selectors Header */}
+                    <Text as="h3" variant="headingSm" fontWeight="bold">
+                      Collection page selectors
+                    </Text>
+                  </BlockStack>
+                </Card>
+              </InlineGrid>
+            </div>
+
+            {/* jQuery Section */}
+            <div style={{ paddingTop: "24px" }}>
+              <InlineGrid columns={{ xs: "1fr", md: "2fr 5fr" }} gap="400">
+                <Box paddingInline={{ xs: "400", sm: "0" }}>
+                  <BlockStack gap="200">
+                    <Text as="h2" variant="headingMd">
+                      jQuery
+                    </Text>
+                  </BlockStack>
+                </Box>
+
+                <Card background="bg-surface" padding="400" borderRadius="300">
+                  <BlockStack gap="400">
+                    <Banner tone="warning">
+                      <Text as="p">
+                        This can sometimes resolve theme issue on mobile versions of Safari but may cause issues if your theme's version of jQuery is very out of date.
+                      </Text>
+                    </Banner>
+                    <Checkbox
+                      label="Force Preorder Now to Never Load its Own Copy of jQuery"
+                      checked={false}
+                      onChange={() => { }}
+                    />
+                  </BlockStack>
+                </Card>
+              </InlineGrid>
+            </div>
+
+            {/* Google Analytics Section */}
+            <div style={{ paddingTop: "24px" }}>
+              <InlineGrid columns={{ xs: "1fr", md: "2fr 5fr" }} gap="400">
+                <Box paddingInline={{ xs: "400", sm: "0" }}>
+                  <BlockStack gap="200">
+                    <Text as="h2" variant="headingMd">
+                      Google Analytics
+                    </Text>
+                  </BlockStack>
+                </Box>
+
+                <Card background="bg-surface" padding="400" borderRadius="300">
+                  <BlockStack gap="400">
+                    <Banner tone="info" title="Google Analytics">
+                      <Text as="p">
+                        If your store has Google Analytics installed, clicks on your store's pre-order button will automatically appear in the Behavior -{">"} Events section of your Google Analytics as shown below. No setup is needed.
+                      </Text>
+                    </Banner>
+                    <Box>
+                      <img
+                        src="https://app.preordernowapp.com/google_analytics1.7a0d71ba.jpg"
+                        alt="Google Analytics Events Screenshot"
+                        style={{ width: "100%", borderRadius: "8px", border: "1px solid #e1e3e5" }}
+                      />
+                    </Box>
+                  </BlockStack>
+                </Card>
+              </InlineGrid>
+            </div>
+          </>
+        );
       case 2:
         return (
           <>
@@ -878,7 +1297,21 @@ export default function SettingsPage() {
           </>
         );
       case 3:
-        return <Text as="p">Style settings content goes here</Text>;
+        return (
+          <div style={{ paddingTop: "24px" }}>
+            <Banner tone="info" title="More style options coming soon!">
+              <Text as="p">
+                We're working on adding more style options. For now, you can adjust preorder message and badge styles in{" "}
+                <Link url="/app/settings" onClick={() => setSelectedTab(0)}>
+                  Default Settings
+                </Link>{" "}
+                or the Product Variant page. Need custom styling?{" "}
+                <Link url="mailto:support@preordernow.com">Contact us</Link>
+                —we'll do it for free!
+              </Text>
+            </Banner>
+          </div>
+        );
       default:
         return null;
     }
