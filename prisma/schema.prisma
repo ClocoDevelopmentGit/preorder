@@ -32,3 +32,51 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+model Settings {
+  id                    String  @id @default(uuid())
+  shop                  String  @unique
+  enabled               Boolean @default(false)
+  buttonLabel           String?
+  preorderMessage       String?
+  messagePosition       String?
+  badgeEnabled          Boolean @default(true)
+  badgeText             String?
+  badgeShape            String?
+  inventoryManagement   Boolean @default(false)
+  orderTag              String?
+  syncInventory         Boolean @default(false)
+  hideBuyNow            Boolean @default(false)
+  badgesOnCollection    Boolean @default(false)
+  badgeOnProduct        Boolean @default(false)
+  buttonsOnCollection   Boolean @default(false)
+  quickviewSupport      Boolean @default(false)
+  cartLabelText         String?
+  cartLabelKey          String?
+  showAdditionalButtons Boolean @default(false)
+  preventOrdering       Boolean @default(false)
+  insufficientStockMsg  String?
+  notifyCustomers       Boolean @default(false)
+  partOrderMsg          String?
+  mixedCartWarning      Boolean @default(false)
+  discountType          String?
+  startDate             String?
+  startTime             String?
+  endDate               String?
+  endTime               String?
+
+  // Advanced Tab
+  shopTimezone          String?
+  selectedTheme         String?
+  selectors             String? // Stored as JSON string
+
+  // Email Tab
+  monthlyChargeLimit    String?
+  bccMe                 Boolean @default(false)
+  bccEmail              String?
+  emailSubject          String?
+  emailHeader           String?
+  emailLineItem         String?
+  emailLineFooter       String?
+  senderEmail           String?
+}

@@ -2,6 +2,7 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
+import { Frame } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
 
@@ -22,7 +23,9 @@ export default function App() {
         <s-link href="/app/additional">Additional page</s-link>
         <s-link href="/app/settings">Settings</s-link>
       </s-app-nav>
-      <Outlet />
+      <Frame>
+        <Outlet />
+      </Frame>
     </AppProvider>
   );
 }
