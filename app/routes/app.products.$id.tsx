@@ -16,10 +16,10 @@ import {
     BlockStack,
     InlineStack,
 } from "@shopify/polaris";
-import { useCallback, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { SearchIcon, PlusIcon, SelectIcon, ImageIcon, InfoIcon } from "@shopify/polaris-icons";
+import { useState, useCallback, useEffect } from "react";
+import { useLoaderData, useSubmit, useNavigation, useNavigate } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
-import { ImageIcon, InfoIcon, AlertIcon, CheckIcon } from "@shopify/polaris-icons";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
@@ -39,10 +39,59 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     return { product };
 };
 
+export const action = async ({ request, params }: any) => {
+    const { session } = await authenticate.admin(request);
+    const { id } = params;
+    const formData = await request.formData();
+    const actionType = formData.get("action");
+
+    if (actionType === "toggle-status") {
+        const currentStatus = formData.get("currentStatus");
+        const newStatus = currentStatus === "Enabled" ? "Disabled" : "Enabled";
+        await db.preorderProduct.update({
+            where: { id },
+            data: { status: newStatus },
+        });
+        return { status: "success" };
+    }
+
+    if (actionType === "delete") {
+        await db.preorderProduct.delete({
+            where: { id },
+        });
+        // We'll handle redirection in the component or via another action
+        return { status: "deleted" };
+    }
+
+    return { status: "error" };
+};
+
 export default function ProductDetail() {
     const { product } = useLoaderData<typeof loader>();
     const navigate = useNavigate();
+    const submit = useSubmit();
+    const navigation = useNavigation();
     const [customSettings, setCustomSettings] = useState(false);
+
+    const isSubmitting = navigation.state === "submitting";
+
+    const handleToggleStatus = useCallback(() => {
+        submit(
+            { action: "toggle-status", currentStatus: product.status },
+            { method: "POST" }
+        );
+    }, [product.status, submit]);
+
+    const handleDelete = useCallback(() => {
+        if (confirm("Are you sure you want to delete this preorder product?")) {
+            submit({ action: "delete" }, { method: "POST" });
+        }
+    }, [submit]);
+
+    useEffect(() => {
+        // Redirection after delete is handled via router logic or useEffect
+        // but for now let's just assume we stay or redirect if action result is 'deleted'
+    }, []);
 
     const resourceName = {
         singular: "product variant",
@@ -52,12 +101,14 @@ export default function ProductDetail() {
     const variantRows = product.variants.map((variant: any, index: number) => (
         <IndexTable.Row id={variant.id} key={variant.id} position={index}>
             <IndexTable.Cell>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <Thumbnail source={ImageIcon} alt={variant.title} size="small" />
-                    <Text variant="bodyMd" fontWeight="bold" as="span">
+                <InlineStack gap="300" align="start" blockAlign="center">
+                    <div style={{ border: "1px solid #dfe3e8", borderRadius: "4px", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon source={ImageIcon} tone="subdued" />
+                    </div>
+                    <Button variant="plain" url={`#`}>
                         {variant.title === "Default Title" ? "Default" : variant.title}
-                    </Text>
-                </div>
+                    </Button>
+                </InlineStack>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Badge tone={variant.status === "Enabled" ? "success" : "attention"}>
@@ -67,175 +118,197 @@ export default function ProductDetail() {
         </IndexTable.Row>
     ));
 
-    return (
-        <Page
-            backAction={{ content: "Products", onAction: () => navigate("/app/products") }}
-            title={product.title}
-            titleMetadata={
-                <Badge tone={product.status === "Enabled" ? "success" : "attention"}>
-                    Preorder {product.status}
-                </Badge>
-            }
-            secondaryActions={[
-                {
-                    content: "More actions",
-                    disclosure: true,
-                },
-            ]}
-        >
-            <Layout>
-                {/* Left Side: Product Card */}
-                <Layout.Section variant="oneThird">
-                    <Card>
-                        <BlockStack gap="400">
-                            <Thumbnail
-                                source={product.image || ImageIcon}
-                                alt={product.title}
-                                size="large"
-                            />
-                            <Text variant="headingMd" as="h2">
-                                {product.title}
-                            </Text>
-                        </BlockStack>
-                    </Card>
-                </Layout.Section>
+    const shopName = product.shop.replace(".myshopify.com", "");
+    const productAdminId = product.productId.split("/").pop();
 
-                {/* Right Side: Settings cards */}
-                <Layout.Section>
-                    <BlockStack gap="500">
-                        {/* Status Card */}
+    return (
+        <div style={{ paddingBottom: "4rem" }}>
+            <Page
+                backAction={{ content: "Products", onAction: () => navigate("/app/products") }}
+                title={product.title}
+                titleMetadata={
+                    <Badge tone={product.status === "Enabled" ? "success" : "attention"}>
+                        {`Preorder ${product.status}`}
+                    </Badge>
+                }
+                actionGroups={[
+                    {
+                        title: "More actions",
+                        actions: [
+                            {
+                                content: "View in Storefront",
+                                onAction: () => window.open(`https://${product.shop}/products/${product.handle}`, "_blank"),
+                            },
+                            {
+                                content: "Edit in Shopify",
+                                onAction: () => window.open(`https://admin.shopify.com/store/${shopName}/products/${productAdminId}`, "_blank"),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <Layout>
+                    {/* Left Side: Product Card */}
+                    <Layout.Section variant="oneThird">
                         <Card>
-                            <InlineStack align="space-between">
-                                <BlockStack gap="200">
+                            <BlockStack gap="400">
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                    <Thumbnail
+                                        source={product.image || ImageIcon}
+                                        alt={product.title}
+                                        size="large"
+                                    />
+                                </div>
+                                <Text variant="bodyMd" fontWeight="bold" as="p">
+                                    {product.title}
+                                </Text>
+                            </BlockStack>
+                        </Card>
+                    </Layout.Section>
+
+                    {/* Right Side: Settings cards */}
+                    <Layout.Section>
+                        <BlockStack gap="500">
+                            {/* Status Card */}
+                            <Card>
+                                <InlineStack align="space-between">
+                                    <BlockStack gap="400">
+                                        <Text variant="headingMd" as="h2">
+                                            Status
+                                        </Text>
+                                        <Text as="p">
+                                            Preorder status is <strong>{product.status.toLowerCase()}</strong>
+                                        </Text>
+                                    </BlockStack>
+                                    <Button
+                                        variant="primary"
+                                        tone="critical"
+                                        onClick={handleToggleStatus}
+                                        loading={isSubmitting}
+                                    >
+                                        {product.status === "Enabled" ? "Disable" : "Enable"}
+                                    </Button>
+                                </InlineStack>
+                                <Box marginTop="400">
+                                    <Banner tone="info" icon={InfoIcon}>
+                                        <p>
+                                            This product is available for preorder. To disable, click the button to the right.
+                                        </p>
+                                    </Banner>
+                                </Box>
+                            </Card>
+
+                            {/* Product Settings Card */}
+                            <Card padding="0">
+                                <div
+                                    style={{
+                                        backgroundColor: "#90caf9",
+                                        borderRadius: "8px 8px 0 0",
+                                        borderBottom: "1px solid #64b5f6",
+                                        padding: "16px"
+                                    }}
+                                >
+                                    <InlineStack gap="200" align="start" blockAlign="center">
+                                        <Icon source={InfoIcon} tone="primary" />
+                                        <Text variant="headingMd" as="h2">
+                                            Product Settings
+                                        </Text>
+                                    </InlineStack>
+                                </div>
+                                <Box padding="400">
+                                    <BlockStack gap="400">
+                                        <Text as="p">
+                                            <Button variant="plain" url="#">Default settings</Button> are automatically enabled. To choose custom settings (such as Button Text and Badge details), please check the box below.
+                                        </Text>
+                                        <Checkbox
+                                            label="Enable Custom Settings"
+                                            checked={customSettings}
+                                            onChange={(val) => setCustomSettings(val)}
+                                        />
+                                    </BlockStack>
+                                </Box>
+                            </Card>
+
+                            {/* Product Variants Card */}
+                            <Card>
+                                <BlockStack gap="400">
                                     <Text variant="headingMd" as="h2">
-                                        Status
+                                        Product Variants
                                     </Text>
                                     <Text as="p">
-                                        Preorder status is <strong>{product.status.toLowerCase()}</strong>
+                                        View the available variants for this product. Click on a variant to configure its preorder settings on the variant settings page.
                                     </Text>
+                                    <IndexTable
+                                        resourceName={resourceName}
+                                        itemCount={product.variants.length}
+                                        headings={[
+                                            { title: "Product Variant" },
+                                            { title: "Preorder Status" },
+                                        ]}
+                                        selectable={false}
+                                    >
+                                        {variantRows}
+                                    </IndexTable>
                                 </BlockStack>
-                                <Button variant="primary" tone="critical">
-                                    {product.status === "Enabled" ? "Disable" : "Enable"}
-                                </Button>
-                            </InlineStack>
-                            <Box marginTop="400">
-                                <Banner tone="info" icon={InfoIcon}>
-                                    <p>
-                                        This product is available for preorder. To disable, click the button to the right.
-                                    </p>
-                                </Banner>
-                            </Box>
-                        </Card>
+                            </Card>
 
-                        {/* Product Settings Card */}
-                        <Card>
-                            <Box
-                                padding="400"
-                                style={{
-                                    backgroundColor: "#e1f5fe",
-                                    margin: "-20px -20px 20px -20px",
-                                    borderRadius: "8px 8px 0 0",
-                                    borderBottom: "1px solid #b3e5fc"
-                                }}
-                            >
-                                <InlineStack gap="200" align="start">
-                                    <Icon source={InfoIcon} tone="primary" />
+                            {/* Product Inventory Card */}
+                            <Card>
+                                <BlockStack gap="400">
                                     <Text variant="headingMd" as="h2">
-                                        Product Settings
+                                        Product Inventory
                                     </Text>
-                                </InlineStack>
-                            </Box>
-                            <BlockStack gap="400">
-                                <Text as="p">
-                                    <Text as="span" variant="bodyMd" fontWeight="bold">Default settings</Text> are automatically enabled. To choose custom settings (such as Button Text and Badge details), please check the box below.
-                                </Text>
-                                <Checkbox
-                                    label="Enable Custom Settings"
-                                    checked={customSettings}
-                                    onChange={(val) => setCustomSettings(val)}
-                                />
-                            </BlockStack>
-                        </Card>
+                                    <Text as="p">
+                                        If the product inventory/details are incorrect, click <Text as="span" fontWeight="bold">"Sync Products"</Text> below.
+                                    </Text>
+                                    <Box>
+                                        <Button>Sync Products</Button>
+                                    </Box>
+                                    <IndexTable
+                                        resourceName={{ singular: "inventory item", plural: "inventory items" }}
+                                        itemCount={2}
+                                        headings={[
+                                            { title: "Products Location" },
+                                            { title: "Inventory Tracking" },
+                                            { title: "Inventory Quantity" },
+                                            { title: "Oversell Status" },
+                                        ]}
+                                        selectable={false}
+                                    >
+                                        <IndexTable.Row id="preorder-now" position={0}>
+                                            <IndexTable.Cell>In Pre-order Now</IndexTable.Cell>
+                                            <IndexTable.Cell>
+                                                <Badge tone="success">Enabled</Badge>
+                                            </IndexTable.Cell>
+                                            <IndexTable.Cell>0</IndexTable.Cell>
+                                            <IndexTable.Cell>
+                                                <Badge tone="warning">Enabled but Inactive on Some Variants</Badge>
+                                            </IndexTable.Cell>
+                                        </IndexTable.Row>
+                                        <IndexTable.Row id="shopify" position={1}>
+                                            <IndexTable.Cell>In Shopify</IndexTable.Cell>
+                                            <IndexTable.Cell>
+                                                <Badge tone="critical">Disabled</Badge>
+                                            </IndexTable.Cell>
+                                            <IndexTable.Cell>0</IndexTable.Cell>
+                                            <IndexTable.Cell>
+                                                <Badge tone="success">Enabled</Badge>
+                                            </IndexTable.Cell>
+                                        </IndexTable.Row>
+                                    </IndexTable>
+                                </BlockStack>
+                            </Card>
 
-                        {/* Product Variants Card */}
-                        <Card>
-                            <BlockStack gap="400">
-                                <Text variant="headingMd" as="h2">
-                                    Product Variants
-                                </Text>
-                                <Text as="p">
-                                    View the available variants for this product. Click on a variant to configure its preorder settings on the variant settings page.
-                                </Text>
-                                <IndexTable
-                                    resourceName={resourceName}
-                                    itemCount={product.variants.length}
-                                    headings={[
-                                        { title: "Product Variant" },
-                                        { title: "Preorder Status" },
-                                    ]}
-                                    selectable={false}
-                                >
-                                    {variantRows}
-                                </IndexTable>
-                            </BlockStack>
-                        </Card>
-
-                        {/* Product Inventory Card */}
-                        <Card>
-                            <BlockStack gap="400">
-                                <Text variant="headingMd" as="h2">
-                                    Product Inventory
-                                </Text>
-                                <Text as="p">
-                                    If the product inventory/details are incorrect, click "Sync Products" below.
-                                </Text>
-                                <Box>
-                                    <Button>Sync Products</Button>
-                                </Box>
-                                <IndexTable
-                                    resourceName={{ singular: "inventory item", plural: "inventory items" }}
-                                    itemCount={2}
-                                    headings={[
-                                        { title: "Products Location" },
-                                        { title: "Inventory Tracking" },
-                                        { title: "Inventory Quantity" },
-                                        { title: "Oversell Status" },
-                                    ]}
-                                    selectable={false}
-                                >
-                                    <IndexTable.Row id="preorder-now" position={0}>
-                                        <IndexTable.Cell>In Pre-order Now</IndexTable.Cell>
-                                        <IndexTable.Cell>
-                                            <Badge tone="success">Enabled</Badge>
-                                        </IndexTable.Cell>
-                                        <IndexTable.Cell>0</IndexTable.Cell>
-                                        <IndexTable.Cell>
-                                            <Badge tone="warning">Enabled but Inactive on Some Variants</Badge>
-                                        </IndexTable.Cell>
-                                    </IndexTable.Row>
-                                    <IndexTable.Row id="shopify" position={1}>
-                                        <IndexTable.Cell>In Shopify</IndexTable.Cell>
-                                        <IndexTable.Cell>
-                                            <Badge tone="critical">Disabled</Badge>
-                                        </IndexTable.Cell>
-                                        <IndexTable.Cell>0</IndexTable.Cell>
-                                        <IndexTable.Cell>
-                                            <Badge tone="success">Enabled</Badge>
-                                        </IndexTable.Cell>
-                                    </IndexTable.Row>
-                                </IndexTable>
-                            </BlockStack>
-                        </Card>
-
-                        {/* Footer Actions */}
-                        <Divider />
-                        <InlineStack align="space-between">
-                            <Button variant="primary" tone="critical">Delete Product</Button>
-                            <Button variant="primary">Save</Button>
-                        </InlineStack>
-                    </BlockStack>
-                </Layout.Section>
-            </Layout>
-        </Page>
+                            {/* Footer Actions */}
+                            <Divider />
+                            <InlineStack align="space-between">
+                                <Button variant="primary" tone="critical" onClick={handleDelete}>Delete Product</Button>
+                                <Button variant="primary" disabled={customSettings}>Save</Button>
+                            </InlineStack>
+                        </BlockStack>
+                    </Layout.Section>
+                </Layout>
+            </Page>
+        </div>
     );
 }
