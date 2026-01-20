@@ -80,3 +80,33 @@ model Settings {
   emailLineFooter       String?
   senderEmail           String?
 }
+
+model PreorderProduct {
+  id              String   @id @default(uuid())
+  shop            String
+  productId       String   @unique // Shopify Product GID
+  title           String
+  handle          String
+  image           String?
+  status          String   @default("Enabled") // Enabled, Disabled
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  variants        PreorderVariant[]
+
+  @@index([shop])
+}
+
+model PreorderVariant {
+  id              String   @id @default(uuid())
+  variantId       String   @unique // Shopify Variant GID
+  title           String
+  price           String?
+  inventory       Int      @default(0)
+  status          String   @default("Enabled") // Enabled, Disabled
+  productId       String
+  product         PreorderProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+}
