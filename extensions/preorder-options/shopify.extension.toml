@@ -1,0 +1,16 @@
+api_version = "2025-04"
+
+[[extensions]]
+name = "Preorder Options"
+handle = "preorder-options"
+
+uid = "53ee3248-dd57-f200-5c8c-96c3f6f105e14510e3d7"
+
+type = "ui_extension"
+
+[[extensions.targeting]]
+target = "admin.product-details.block.render"
+module = "./src/BlockExtension.tsx"
+
+[extensions.capabilities]
+api_access = true

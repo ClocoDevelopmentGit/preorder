@@ -152,7 +152,7 @@ export default function ProductDetail() {
                     <Layout.Section variant="oneThird">
                         <Card>
                             <BlockStack gap="400">
-                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                <div style={{ display: "flex", justifyContent: "flex-start" }}>
                                     <Thumbnail
                                         source={product.image || ImageIcon}
                                         alt={product.title}
@@ -170,8 +170,8 @@ export default function ProductDetail() {
                     <Layout.Section>
                         <BlockStack gap="500">
                             {/* Status Card */}
-                            <Card>
-                                <InlineStack align="space-between">
+                            <Card >
+                                <InlineStack align="space-between" blockAlign="start">
                                     <BlockStack gap="400">
                                         <Text variant="headingMd" as="h2">
                                             Status
@@ -189,7 +189,7 @@ export default function ProductDetail() {
                                         {product.status === "Enabled" ? "Disable" : "Enable"}
                                     </Button>
                                 </InlineStack>
-                                <Box marginTop="400">
+                                <Box paddingBlockStart="400">
                                     <Banner tone="info" icon={InfoIcon}>
                                         <p>
                                             This product is available for preorder. To disable, click the button to the right.
@@ -209,7 +209,9 @@ export default function ProductDetail() {
                                     }}
                                 >
                                     <InlineStack gap="200" align="start" blockAlign="center">
-                                        <Icon source={InfoIcon} tone="primary" />
+                                        <div style={{ margin: "0px" }}>
+                                            <Icon source={InfoIcon} tone="primary" />
+                                        </div>
                                         <Text variant="headingMd" as="h2">
                                             Product Settings
                                         </Text>
