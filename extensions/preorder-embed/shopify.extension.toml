@@ -1,0 +1,13 @@
+api_version = "2024-07"
+
+[[extensions]]
+name = "Preorder Script"
+handle = "preorder-script"
+
+uid = "28213380-2470-7f20-80a6-d6b0b5c1bc7b0754324c"
+
+type = "theme_app_extension"
+
+  [[extensions.targeting]]
+  target = "body"
+  module = "./blocks/preorder_script.liquid"

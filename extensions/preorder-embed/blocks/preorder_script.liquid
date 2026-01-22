@@ -1,0 +1,14 @@
+{% schema %}
+{
+  "name": "Preorder Script",
+  "target": "body",
+  "javascript": "preorder.js",
+  "settings": []
+}
+{% endschema %}
+
+<script>
+  console.log("[Preorder] Liquid Block Rendered");
+  window.Shopify = window.Shopify || {};
+  window.Shopify.shop = "{{ shop.permanent_domain }}"; 
+</script>

@@ -19,7 +19,6 @@ interface Props {
 }
 
 export default function DefaultTab({ settings, onChange }: Props) {
-
     const handleChange = (key: string) => (value: any) => {
         onChange(key, value);
     };
@@ -39,14 +38,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
 
                     <Card background="bg-surface" padding="400">
                         <BlockStack gap="400">
-                            <Banner tone="info">
-                                <Text as="p">
-                                    This feature is off while we work on a better way to
-                                    enable multiple products at once. For now, you can use
-                                    the Preorder Products page or ask our support team for
-                                    help.
-                                </Text>
-                            </Banner>
+
 
                             <Text as="p" tone="subdued">
                                 This setting will enable pre-order for all of your
@@ -55,9 +47,63 @@ export default function DefaultTab({ settings, onChange }: Props) {
 
                             <Checkbox
                                 label="Enable Preorder for All Products"
-                                checked={false}
-                                disabled
+                                checked={settings.enablePreorderAll}
+                                onChange={handleChange("enablePreorderAll")}
                             />
+
+                            <InlineStack align="start">
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        onChange("forceSync", "true");
+                                        setTimeout(() => {
+                                            const saveBtn = document.querySelector('[data-save-bar-action="primary"]');
+                                            if (saveBtn instanceof HTMLElement) saveBtn.click();
+                                        }, 50);
+                                    }}
+                                >
+                                    Sync Inventory Policy for All Products
+                                </Button>
+                            </InlineStack>
+                            <Box paddingBlockStart="200">
+                                <Text as="p" tone="subdued">
+                                    This will ensure all products have "Continue selling when out of stock" enabled so preorders work at checkout.
+                                </Text>
+                            </Box>
+
+                            <div style={{ marginTop: '20px', borderTop: '1px solid #dfe3e8', paddingTop: '20px' }}>
+                                <BlockStack gap="200">
+                                    <Text as="h3" variant="headingSm">Debug Variant</Text>
+                                    <InlineStack gap="200" align="start">
+                                        <div style={{ flexGrow: 1 }}>
+                                            <TextField
+                                                label="Enter Variant ID (to check/fix specifically)"
+                                                value={settings.debugVariantId || ""}
+                                                onChange={(val) => onChange("debugVariantId", val)}
+                                                autoComplete="off"
+                                                placeholder="e.g. 43695782789206"
+                                            />
+                                        </div>
+                                        <div style={{ marginTop: '24px' }}>
+                                            <Button
+                                                onClick={() => {
+                                                    onChange("forceSyncVariant", "true");
+                                                    setTimeout(() => {
+                                                        const saveBtn = document.querySelector('[data-save-bar-action="primary"]');
+                                                        if (saveBtn instanceof HTMLElement) saveBtn.click();
+                                                    }, 50);
+                                                }}
+                                                variant="secondary"
+                                            >
+                                                Check & Fix
+                                            </Button>
+                                        </div>
+                                    </InlineStack>
+                                    <Text as="p" tone="subdued">
+                                        Use this if a specific product is still showing "Sold Out" at checkout.
+                                    </Text>
+                                </BlockStack>
+                            </div>
                         </BlockStack>
                     </Card>
                 </InlineGrid>

@@ -1,34 +1,28 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
   url      = "file:dev.sqlite"
 }
 
 model Session {
-  id            String    @id
-  shop          String
-  state         String
-  isOnline      Boolean   @default(false)
-  scope         String?
-  expires       DateTime?
-  accessToken   String
-  userId        BigInt?
-  firstName     String?
-  lastName      String?
-  email         String?
-  accountOwner  Boolean   @default(false)
-  locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
@@ -37,6 +31,7 @@ model Settings {
   id                    String  @id @default(uuid())
   shop                  String  @unique
   enabled               Boolean @default(false)
+  enablePreorderAll     Boolean @default(false)
   buttonLabel           String?
   preorderMessage       String?
   messagePosition       String?
@@ -64,13 +59,9 @@ model Settings {
   startTime             String?
   endDate               String?
   endTime               String?
-
-  // Advanced Tab
   shopTimezone          String?
   selectedTheme         String?
-  selectors             String? // Stored as JSON string
-
-  // Email Tab
+  selectors             String?
   monthlyChargeLimit    String?
   bccMe                 Boolean @default(false)
   bccEmail              String?
@@ -82,31 +73,31 @@ model Settings {
 }
 
 model PreorderProduct {
-  id              String   @id @default(uuid())
-  shop            String
-  productId       String   @unique // Shopify Product GID
-  title           String
-  handle          String
-  image           String?
-  status          String   @default("Enabled") // Enabled, Disabled
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  variants        PreorderVariant[]
+  id        String            @id @default(uuid())
+  shop      String
+  productId String            @unique
+  title     String
+  handle    String
+  image     String?
+  status    String            @default("Enabled")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  variants  PreorderVariant[]
 
   @@index([shop])
 }
 
 model PreorderVariant {
-  id              String   @id @default(uuid())
-  variantId       String   @unique // Shopify Variant GID
-  title           String
-  price           String?
-  inventory       Int      @default(0)
-  status          String   @default("Enabled") // Enabled, Disabled
-  productId       String
-  product         PreorderProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String          @id @default(uuid())
+  variantId String          @unique
+  title     String
+  price     String?
+  inventory Int             @default(0)
+  status    String          @default("Enabled")
+  productId String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  product   PreorderProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
 }
