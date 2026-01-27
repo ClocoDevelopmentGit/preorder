@@ -188,6 +188,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                 handle: product.handle,
                 image: product.image,
                 status: product.status,
+                customSettings: product.customSettings,
                 createdAt: product.createdAt.toISOString(),
                 updatedAt: product.updatedAt.toISOString(),
                 variants: product.variants.map((variant) => ({

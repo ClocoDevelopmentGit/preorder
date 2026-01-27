@@ -18,7 +18,7 @@ import {
 } from "@shopify/polaris";
 import { SearchIcon, PlusIcon, SelectIcon, ImageIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useState, useCallback, useEffect } from "react";
-import { useLoaderData, useSubmit, useNavigation, useNavigate } from "react-router";
+import { useLoaderData, useSubmit, useNavigation, useNavigate, useActionData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
@@ -52,7 +52,7 @@ export const action = async ({ request, params }: any) => {
             where: { id },
             data: { status: newStatus },
         });
-        return { status: "success" };
+        return { status: "success", message: `Preorder ${newStatus.toLowerCase()} successfully` };
     }
 
     if (actionType === "delete") {
@@ -63,17 +63,32 @@ export const action = async ({ request, params }: any) => {
         return { status: "deleted" };
     }
 
+    if (actionType === "save") {
+        const customSettings = formData.get("customSettings") === "true";
+
+        await db.preorderProduct.update({
+            where: { id },
+            data: {
+                customSettings,
+                updatedAt: new Date(),
+            },
+        });
+        return { status: "success", message: "Settings saved successfully" };
+    }
+
     return { status: "error" };
 };
 
 export default function ProductDetail() {
     const { product } = useLoaderData<typeof loader>();
+    const actionData = useActionData<any>();
     const navigate = useNavigate();
     const submit = useSubmit();
     const navigation = useNavigation();
-    const [customSettings, setCustomSettings] = useState(false);
+    const [customSettings, setCustomSettings] = useState((product as any).customSettings || false);
 
     const isSubmitting = navigation.state === "submitting";
+    const isDirty = customSettings !== (product as any).customSettings;
 
     const handleToggleStatus = useCallback(() => {
         submit(
@@ -88,10 +103,26 @@ export default function ProductDetail() {
         }
     }, [submit]);
 
+    const handleSave = useCallback(() => {
+        if (!isDirty) return;
+        submit(
+            { action: "save", customSettings: customSettings.toString() },
+            { method: "POST" }
+        );
+    }, [customSettings, submit, isDirty]);
+
     useEffect(() => {
-        // Redirection after delete is handled via router logic or useEffect
-        // but for now let's just assume we stay or redirect if action result is 'deleted'
-    }, []);
+        setCustomSettings((product as any).customSettings || false);
+    }, [product.customSettings]);
+
+    useEffect(() => {
+        if (actionData?.status === "success" && actionData?.message) {
+            shopify.toast.show(actionData.message);
+        } else if (actionData?.status === "deleted") {
+            shopify.toast.show("Product deleted successfully");
+            navigate("/app/products");
+        }
+    }, [actionData, navigate]);
 
     const resourceName = {
         singular: "product variant",
@@ -305,7 +336,7 @@ export default function ProductDetail() {
                             <Divider />
                             <InlineStack align="space-between">
                                 <Button variant="primary" tone="critical" onClick={handleDelete}>Delete Product</Button>
-                                <Button variant="primary" disabled={customSettings}>Save</Button>
+                                <Button variant="primary" onClick={handleSave} loading={isSubmitting} disabled={!isDirty || isSubmitting}>Save</Button>
                             </InlineStack>
                         </BlockStack>
                     </Layout.Section>

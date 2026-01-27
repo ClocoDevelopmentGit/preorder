@@ -73,16 +73,17 @@ model Settings {
 }
 
 model PreorderProduct {
-  id        String            @id @default(uuid())
-  shop      String
-  productId String            @unique
-  title     String
-  handle    String
-  image     String?
-  status    String            @default("Enabled")
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  variants  PreorderVariant[]
+  id             String            @id @default(uuid())
+  shop           String
+  productId      String            @unique
+  title          String
+  handle         String
+  image          String?
+  status         String            @default("Enabled")
+  customSettings Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  variants       PreorderVariant[]
 
   @@index([shop])
 }
