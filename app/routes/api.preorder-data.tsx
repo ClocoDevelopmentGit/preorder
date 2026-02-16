@@ -91,13 +91,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         }
 
         // Fetch preorder products with their variants
-        const products = await prisma.preorderProduct.findMany({
+        const rawProducts = await prisma.preorderProduct.findMany({
             where: productQuery,
             include: {
                 variants: true,
             },
             orderBy: { createdAt: "desc" },
         });
+
+        // Filter to only include products where inventory <= 0
+        // We filter variants first, then remove products with no remaining variants
+        const products = rawProducts.map((product) => ({
+            ...product,
+            variants: product.variants.filter((v) => v.inventory <= 0)
+        })).filter((product) => product.variants.length > 0);
 
         // Shape the response
         // Using 'any' cast for settings to bypass the TS error about missing property for now,
