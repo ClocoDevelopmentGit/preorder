@@ -100,8 +100,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               productVariant(id: $id) {
                   id 
                   inventoryPolicy 
-                  inventoryManagement 
+                  inventoryItem {
+                    tracked
+                  }
                   inventoryQuantity
+                  product {
+                    id
+                  }
               }
           }`,
         { variables: { id: gid } }
@@ -109,14 +114,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const checkJson = await checkResponse.json();
       console.log("[Sync Debug] Current State BEFORE sync:", JSON.stringify(checkJson.data?.productVariant, null, 2));
 
+      const productId = checkJson.data?.productVariant?.product?.id;
+      if (!productId) {
+        throw new Error("Product ID not found for variant");
+      }
+
       const response: any = await admin.graphql(
         `#graphql
-          mutation updateVariant($id: ID!, $policy: InventoryPolicy!) {
-            productVariantUpdate(input: { id: $id, inventoryPolicy: $policy, inventoryManagement: SHOPIFY }) {
-              productVariant {
+          mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+              productVariants {
                 id
                 inventoryPolicy
-                inventoryManagement
+                inventoryItem {
+                  tracked
+                }
                 title
                 product { title }
               }
@@ -128,8 +140,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           }`,
         {
           variables: {
-            id: gid,
-            policy: "CONTINUE"
+            productId: productId,
+            variants: [{
+              id: gid,
+              inventoryPolicy: "CONTINUE",
+              inventoryItem: {
+                tracked: true
+              }
+            }]
           }
         }
       );
@@ -137,11 +155,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const resJson = await response.json();
       console.log("[Sync Debug] Mutation Result:", JSON.stringify(resJson, null, 2));
 
-      const userErrors = resJson.data?.productVariantUpdate?.userErrors;
+      const bulkResult = resJson.data?.productVariantsBulkUpdate;
+      const userErrors = bulkResult?.userErrors;
       if (userErrors && userErrors.length > 0) {
         console.error("[Sync Debug] Failed with User Errors:", userErrors);
       } else {
-        const variant = resJson.data?.productVariantUpdate?.productVariant;
+        const variant = bulkResult?.productVariants?.[0];
         console.log(`[Sync Debug] SUCCESS: Updated ${variant?.product?.title} (${variant?.title}) to ${variant?.inventoryPolicy}`);
       }
     } catch (err) {

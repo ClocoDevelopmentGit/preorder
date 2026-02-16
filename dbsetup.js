@@ -6,22 +6,29 @@ import fs from 'node:fs'
 
 const env = { ...process.env }
 
-// place Sqlite3 database on volume
-const source = path.resolve('/dev.sqlite')
-const target = '/data/' + path.basename(source)
-if (!fs.existsSync(source) && fs.existsSync('/data')) fs.symlinkSync(target, source)
-const newDb = !fs.existsSync(target)
-if (newDb && process.env.BUCKET_NAME) {
-  await exec(`npx litestream restore -config litestream.yml -if-replica-exists ${target}`)
+// Prepare database path and Litestream
+const target = '/data/dev.sqlite'
+const hasDataDir = fs.existsSync('/data')
+
+if (hasDataDir && !fs.existsSync(target) && process.env.BUCKET_NAME) {
+  console.log('Restoring database from Litestream...')
+  try {
+    await exec(`npx litestream restore -config litestream.yml -if-replica-exists ${target}`)
+  } catch (e) {
+    console.error('Litestream restore failed, starting with fresh database', e)
+  }
 }
 
 // prepare database
+console.log('Running prisma migrations...')
 await exec('npx prisma migrate deploy')
 
 // launch application
 if (process.env.BUCKET_NAME) {
+  console.log('Starting application with Litestream replication...')
   await exec(`npx litestream replicate -config litestream.yml -exec ${JSON.stringify(process.argv.slice(2).join(' '))}`)
 } else {
+  console.log('Starting application...')
   await exec(process.argv.slice(2).join(' '))
 }
 
