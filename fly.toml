@@ -14,15 +14,18 @@ primary_region = 'bom'
   SHOPIFY_API_KEY = '078f046c957c2c507c56051c17a6610e'
   SHOPIFY_APP_URL = 'https://preorder.fly.dev'
 
+[deploy]
+  release_command = "npm run setup"
+
 [processes]
-  app = 'npm run docker-start'
+  app = 'npm run start'
 
 [http_service]
   internal_port = 3000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[vm]]
