@@ -34,12 +34,10 @@
                   document.querySelector(".single-product__add-to-cart") || 
                   document.querySelector("[name='add']");
       if (!btn) return;
-      
       const variantId = getLiveId();
       if (!variantId || !productData) return;
       const variant = productData.variants.find(v => v.id.toString() === variantId);
       if (!variant) return;
-
       const qty = variant.inventory_quantity;
       const isTracked = variant.inventory_management === "shopify";
       const pId = productData.id.toString();

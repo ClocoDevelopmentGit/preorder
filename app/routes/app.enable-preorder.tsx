@@ -18,43 +18,77 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             ? variantId
             : `gid://shopify/ProductVariant/${variantId}`;
 
-        // Enable inventory tracking and set to 0
-        const response: any = await admin.graphql(
+        // 1. Fetch the Product ID from the Variant ID (required for productVariantsBulkUpdate)
+        const variantResponse = await admin.graphql(
             `#graphql
-        mutation enableInventoryTracking($id: ID!) {
-          productVariantUpdate(input: { 
-            id: $id, 
-            inventoryManagement: SHOPIFY,
-            inventoryPolicy: CONTINUE
-          }) {
-            productVariant {
-              id
-              title
-              inventoryManagement
-              inventoryPolicy
-              inventoryQuantity
-              product { title }
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }`,
+            query getVariantProduct($id: ID!) {
+              productVariant(id: $id) {
+                product {
+                  id
+                }
+              }
+            }`,
             { variables: { id: gid } }
         );
 
+        const variantData = await variantResponse.json();
+        const productId = variantData.data?.productVariant?.product?.id;
+
+        if (!productId) {
+            return {
+                success: false,
+                error: "Product ID not found for this variant. Please check if the Variant ID is correct."
+            };
+        }
+
+        // 2. Use productVariantsBulkUpdate (replaces deprecated productVariantUpdate)
+        const response: any = await admin.graphql(
+            `#graphql
+            mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+              productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                productVariants {
+                  id
+                  title
+                  inventoryPolicy
+                  inventoryQuantity
+                  inventoryItem {
+                    tracked
+                  }
+                  product { title }
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }`,
+            {
+                variables: {
+                    productId: productId,
+                    variants: [{
+                        id: gid,
+                        inventoryPolicy: "CONTINUE",
+                        inventoryItem: {
+                            tracked: true
+                        }
+                    }]
+                }
+            }
+        );
+
         const resJson = await response.json();
-        const result = resJson.data?.productVariantUpdate;
+        const result = resJson.data?.productVariantsBulkUpdate;
 
         if (result?.userErrors?.length > 0) {
             return { success: false, error: result.userErrors[0].message };
         }
 
+        const variant = result.productVariants[0];
+
         return {
             success: true,
-            variant: result.productVariant,
-            message: `Successfully enabled inventory tracking for ${result.productVariant.product.title} - ${result.productVariant.title}`
+            variant: variant,
+            message: `Successfully enabled inventory tracking for ${variant.product.title} - ${variant.title}`
         };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -100,7 +134,7 @@ export default function EnablePreorderPage() {
                         <div style={{ marginTop: "20px" }}>
                             <Banner tone="success">
                                 <p>{actionData.message}</p>
-                                <p>Inventory Management: {actionData.variant?.inventoryManagement}</p>
+                                <p>Inventory Tracking: {actionData.variant?.inventoryItem?.tracked ? "Enabled" : "Disabled"}</p>
                                 <p>Inventory Policy: {actionData.variant?.inventoryPolicy}</p>
                                 <p>Current Quantity: {actionData.variant?.inventoryQuantity}</p>
                             </Banner>
