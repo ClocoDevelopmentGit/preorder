@@ -101,10 +101,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
         // Filter to only include products where inventory <= 0
         // We filter variants first, then remove products with no remaining variants
-        const products = rawProducts.map((product) => ({
-            ...product,
-            variants: product.variants.filter((v) => v.inventory <= 0)
-        })).filter((product) => product.variants.length > 0);
+        const products = rawProducts;
 
         // Shape the response
         // Using 'any' cast for settings to bypass the TS error about missing property for now,

@@ -25,6 +25,8 @@ model Session {
   emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
+
+  @@map("session")
 }
 
 model Settings {
@@ -70,6 +72,8 @@ model Settings {
   emailLineItem         String?
   emailLineFooter       String?
   senderEmail           String?
+
+  @@map("settings")
 }
 
 model PreorderProduct {
@@ -86,6 +90,7 @@ model PreorderProduct {
   variants       PreorderVariant[]
 
   @@index([shop])
+  @@map("preorder_products")
 }
 
 model PreorderVariant {
@@ -101,4 +106,5 @@ model PreorderVariant {
   product   PreorderProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
+  @@map("preorder_variants")
 }
