@@ -19,241 +19,142 @@ import { authenticate } from "../shopify.server";
  *     GET /api/preorder-data?shop=my-store.myshopify.com&productId=gid://shopify/Product/123456
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+    console.log(`[API] Received request: ${request.url}`);
     const url = new URL(request.url);
     const shop = url.searchParams.get("shop");
-    const productId = url.searchParams.get("productId");
     const variantId = url.searchParams.get("variantId");
 
-    // CORS headers for global access
     const headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
-        "Cache-Control": "no-store", // Ensure real-time data
+        "Cache-Control": "no-store",
     };
 
-    // ... preflight check ...
     if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers });
     }
 
     if (!shop) {
+        console.warn("[API] Missing shop parameter");
         return new Response(JSON.stringify({ success: false, error: "Missing shop" }), { status: 400, headers });
     }
 
     try {
-        // Try to get admin context for real-time stock, but don't fail if it's not available
         let admin: any = null;
         try {
+            console.log(`[API] Authenticating app proxy for ${shop}`);
             const auth = await authenticate.public.appProxy(request);
             admin = auth.admin;
+            console.log(`[API] App Proxy Auth successful. Admin status: ${!!admin}`);
         } catch (e) {
-            console.warn("[API] App Proxy Auth failed, continuing without admin context");
+            console.warn("[API] App Proxy Auth failed or not present, continuing with public data only");
         }
 
-        // If variantId is provided, we fetch its real-time status from Shopify (if admin available)
         let variantInfo = null;
         if (variantId && admin) {
-            console.log(`[API] Checking real-time stock for variant: ${variantId}`);
-            const gid = variantId.includes("gid://") ? variantId : `gid://shopify/ProductVariant/${variantId}`;
-            const response = await admin.graphql(
-                `#graphql
-                query getVariant($id: ID!) {
-                  productVariant(id: $id) {
-                    id
-                    inventoryQuantity
-                    inventoryPolicy
-                  }
-                }`,
-                { variables: { id: gid } }
-            );
-            const resData = await response.json();
-            const rawInfo = resData.data?.productVariant;
-            if (rawInfo) {
-                variantInfo = {
-                    ...rawInfo,
-                    isOutOfStock: rawInfo.inventoryQuantity <= 0,
-                    canPreorder: rawInfo.inventoryPolicy === "CONTINUE"
-                };
+            try {
+                console.log(`[API] Fetching real-time stock for variant: ${variantId}`);
+                const gid = variantId.includes("gid://") ? variantId : `gid://shopify/ProductVariant/${variantId}`;
+                const response = await admin.graphql(
+                    `#graphql
+                    query getVariant($id: ID!) {
+                      productVariant(id: $id) {
+                        id
+                        inventoryQuantity
+                        inventoryPolicy
+                      }
+                    }`,
+                    { variables: { id: gid } }
+                );
+                const resData = await response.json();
+                if (resData.errors) {
+                    console.error("[API] GraphQL errors:", JSON.stringify(resData.errors));
+                }
+                const rawInfo = resData.data?.productVariant;
+                if (rawInfo) {
+                    variantInfo = {
+                        id: rawInfo.id,
+                        inventoryQuantity: rawInfo.inventoryQuantity,
+                        inventoryPolicy: rawInfo.inventoryPolicy,
+                        isOutOfStock: rawInfo.inventoryQuantity <= 0,
+                        canPreorder: rawInfo.inventoryPolicy === "CONTINUE"
+                    };
+                }
+            } catch (err) {
+                console.error("[API] Real-time fetch failed:", err);
             }
-        } else if (variantId && !admin) {
-            console.warn("[API] Cannot fetch real-time variant info: Admin context missing.");
         }
 
+        console.log(`[API] Fetching settings for ${shop}`);
         const settings = await prisma.settings.findUnique({ where: { shop } });
-        // ... rest of logic uses variantInfo ...
 
-        // Build query for preorder products
-        const productQuery: { shop: string; productId?: string } = { shop };
-        if (productId) {
-            productQuery.productId = productId;
-        }
-
-        // Fetch preorder products with their variants
+        console.log(`[API] Fetching preorder products for ${shop}`);
         const rawProducts = await prisma.preorderProduct.findMany({
-            where: productQuery,
-            include: {
-                variants: true,
-            },
+            where: { shop },
+            include: { variants: true },
             orderBy: { createdAt: "desc" },
         });
 
-        // Filter to only include products where inventory <= 0
-        // We filter variants first, then remove products with no remaining variants
-        const products = rawProducts;
-
-        // Shape the response
-        // Using 'any' cast for settings to bypass the TS error about missing property for now,
-        // since we know it exists in the schema but maybe not in the generated types yet if 'prisma generate' failed or didn't pick up correctly in the editor context of tool 84's lint error.
-        // Actually, we ran 'prisma generate' successfully in Step 56, so the type 'Settings' SHOULD have 'enablePreorderAll'.
-        // If the linter still complains, it might be an artifact of the environment.
-        // I'll assume it exists, but I will cast it or ensure I use the property safely.
-
-        // Default settings structure to ensure API always returns valid JSON even if DB is empty
         const defaults = {
             enabled: false,
             enablePreorderAll: false,
             buttonLabel: "Preorder Now",
-            preorderMessage: "Your Preorder is available from 25th June",
+            preorderMessage: "Preorder available",
             messagePosition: "Below Button",
-            badgeEnabled: false,
-            badgeText: null,
-            badgeShape: null,
-            inventoryManagement: false,
-            orderTag: null,
-            cartLabelText: null,
             selectors: "{}",
-            hideBuyNow: false,
-            startDate: null,
-            startTime: null,
-            endDate: null,
-            endTime: null,
         };
 
-        const currentSettings = settings ? settings : defaults;
-
-        // Verify enablePreorderAll property exists or default it
-        // (handling potential DB vs Type mismatches safely)
+        const currentSettings = settings || defaults;
         const enablePreorderAll = (currentSettings as any).enablePreorderAll ?? false;
 
-        // Clean selectors string to remove jQuery-only pseudo-classes that break native querySelector
         let cleanedSelectors = currentSettings.selectors || "{}";
         try {
             let sObj = JSON.parse(cleanedSelectors);
             for (let key in sObj) {
                 if (typeof sObj[key] === 'string') {
-                    // Remove :visible, :first, :eq(n), etc.
-                    sObj[key] = sObj[key]
-                        .replace(/:visible/g, '')
-                        .replace(/:first/g, '')
-                        .replace(/:eq\(\d+\)/g, '')
-                        .replace(/:hidden/g, '')
-                        .trim();
+                    sObj[key] = sObj[key].replace(/:visible/g, '').replace(/:first/g, '').replace(/:eq\(\d+\)/g, '').replace(/:hidden/g, '').trim();
                 }
             }
             cleanedSelectors = JSON.stringify(sObj);
-        } catch (e) {
-            console.error("[API] Error cleaning selectors:", e);
-        }
-
-        const settingsResponse = {
-            enabled: currentSettings.enabled,
-            enablePreorderAll: enablePreorderAll,
-            buttonLabel: currentSettings.buttonLabel,
-            preorderMessage: currentSettings.preorderMessage,
-            messagePosition: currentSettings.messagePosition,
-            badgeEnabled: currentSettings.badgeEnabled,
-            badgeText: currentSettings.badgeText,
-            badgeShape: currentSettings.badgeShape,
-            inventoryManagement: currentSettings.inventoryManagement,
-            orderTag: currentSettings.orderTag,
-            cartLabelText: currentSettings.cartLabelText,
-            selectors: cleanedSelectors, // Cleaned JSON string
-            hideBuyNow: currentSettings.hideBuyNow,
-            startDate: currentSettings.startDate,
-            startTime: currentSettings.startTime,
-            endDate: currentSettings.endDate,
-            endTime: currentSettings.endTime,
-        };
-
-        console.log(`[API] Success for ${shop}. EnableAll: ${enablePreorderAll}, Enabled: ${currentSettings.enabled}`);
-
-        const response = {
-            success: true,
-            shop,
-            timestamp: new Date().toISOString(),
-            variantInfo,
-            settings: settingsResponse,
-            products: products.map((product) => ({
-                id: product.id,
-                productId: product.productId,
-                title: product.title,
-                handle: product.handle,
-                image: product.image,
-                status: product.status,
-                customSettings: product.customSettings,
-                createdAt: product.createdAt.toISOString(),
-                updatedAt: product.updatedAt.toISOString(),
-                variants: product.variants.map((variant) => ({
-                    id: variant.id,
-                    variantId: variant.variantId,
-                    title: variant.title,
-                    price: variant.price,
-                    inventory: variant.inventory,
-                    status: variant.status,
-                })),
-            })),
-            totalProducts: products.length,
-        };
-
-        return new Response(JSON.stringify(response, null, 2), {
-            status: 200,
-            headers,
-        });
-    } catch (error: any) {
-        console.error("Error fetching preorder data:", error);
-
-        try {
-            const fs = require('fs');
-            fs.appendFileSync('debug_api.log', `[${new Date().toISOString()}] Error: ${error?.message}\nStack: ${error?.stack}\n\n`);
         } catch (e) { }
 
-        // Fallback: Return default "Disabled" settings instead of crashing the frontend script with 500
-        // This ensures the site remains functional even if the app DB is locked/down.
+        const responseData = {
+            success: true,
+            shop,
+            variantInfo,
+            settings: {
+                ...currentSettings,
+                enablePreorderAll,
+                selectors: cleanedSelectors,
+            },
+            products: rawProducts.map(p => ({
+                ...p,
+                createdAt: p.createdAt?.toISOString() || new Date().toISOString(),
+                updatedAt: p.updatedAt?.toISOString() || new Date().toISOString(),
+                variants: p.variants.map(v => ({
+                    ...v,
+                    createdAt: v.createdAt?.toISOString() || new Date().toISOString(),
+                    updatedAt: v.updatedAt?.toISOString() || new Date().toISOString(),
+                }))
+            }))
+        };
+
+        console.log(`[API] Successfully returning data for ${shop}`);
+        return new Response(JSON.stringify(responseData), { status: 200, headers });
+
+    } catch (error: any) {
+        console.error("[API] FATAL ERROR:", error);
+
         const safeDefaults = {
-            enabled: false,
-            enablePreorderAll: false,
-            buttonLabel: "Preorder Now",
-            // ... other defaults implied
+            success: false,
+            error: "Internal Server Error",
+            message: error?.message || "Unknown error",
+            settings: { enabled: false, enablePreorderAll: false },
+            products: []
         };
 
-        let debugInfo: any = {
-            message: error?.message || "No message",
-            stack: error?.stack || "No stack",
-            type: typeof error,
-            raw: JSON.stringify(error, Object.getOwnPropertyNames(error))
-        };
-
-        if (error instanceof Response) {
-            debugInfo = {
-                isResponse: true,
-                status: error.status,
-                statusText: error.statusText,
-                headers: Object.fromEntries(error.headers.entries()),
-                type: "Response Object"
-            };
-        }
-
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: "Failed to fetch preorder data (using defaults)",
-                settings: safeDefaults,
-                products: [],
-                debug: debugInfo
-            }),
-            { status: 200, headers }
-        );
+        return new Response(JSON.stringify(safeDefaults), { status: 200, headers });
     }
 };
