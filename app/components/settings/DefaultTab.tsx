@@ -47,7 +47,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
 
                             <Checkbox
                                 label="Enable Preorder for All Products"
-                                checked={settings.enablePreorderAll}
+                                checked={!!settings.enablePreorderAll}
                                 onChange={handleChange("enablePreorderAll")}
                             />
 
@@ -145,7 +145,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             </Text>
                             <Checkbox
                                 label="Enable Shopify Purchase Options"
-                                checked={settings.enabled}
+                                checked={!!settings.enabled}
                                 onChange={handleChange("enabled")}
                             />
                             <InlineStack align="start">
@@ -207,7 +207,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             <BlockStack gap="200">
                                 <TextField
                                     label="Button Label"
-                                    value={settings.buttonLabel}
+                                    value={settings.buttonLabel || ""}
                                     onChange={handleChange("buttonLabel")}
                                     autoComplete="off"
                                 />
@@ -215,7 +215,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <InlineGrid columns={2} gap="400">
                                     <TextField
                                         label="Preorder Message"
-                                        value={settings.preorderMessage}
+                                        value={settings.preorderMessage || ""}
                                         onChange={handleChange("preorderMessage")}
                                         autoComplete="off"
                                     />
@@ -223,7 +223,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                     <Select
                                         label="Message Position"
                                         options={["Below Button", "Above Button"]}
-                                        value={settings.messagePosition}
+                                        value={settings.messagePosition || "Below Button"}
                                         onChange={handleChange("messagePosition")}
                                     />
                                 </InlineGrid>
@@ -291,14 +291,14 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             <BlockStack gap="200">
                                 <Checkbox
                                     label="Badge Enabled"
-                                    checked={settings.badgeEnabled}
+                                    checked={!!settings.badgeEnabled}
                                     onChange={handleChange("badgeEnabled")}
                                 />
 
                                 <InlineGrid columns={2} gap="400">
                                     <TextField
                                         label="Badge Text"
-                                        value={settings.badgeText}
+                                        value={settings.badgeText || ""}
                                         onChange={handleChange("badgeText")}
                                         autoComplete="off"
                                     />
@@ -306,7 +306,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                     <Select
                                         label="Badge Shape"
                                         options={["Ribbon", "Circle", "Square"]}
-                                        value={settings.badgeShape}
+                                        value={settings.badgeShape || "Ribbon"}
                                         onChange={handleChange("badgeShape")}
                                     />
                                 </InlineGrid>
@@ -335,7 +335,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             </Banner>
                             <Checkbox
                                 label="Enable Inventory Management"
-                                checked={settings.inventoryManagement}
+                                checked={!!settings.inventoryManagement}
                                 onChange={handleChange("inventoryManagement")}
                             />
                         </BlockStack>
@@ -357,13 +357,13 @@ export default function DefaultTab({ settings, onChange }: Props) {
                         <BlockStack gap="400">
                             <TextField
                                 label="Shopify Tag to be Added to Orders Containing Preorder Products."
-                                value={settings.orderTag}
+                                value={settings.orderTag || ""}
                                 onChange={handleChange("orderTag")}
                                 autoComplete="off"
                             />
                             <Checkbox
                                 label="Sync inventory using third party system (outside of Shopify)"
-                                checked={settings.syncInventory}
+                                checked={!!settings.syncInventory}
                                 onChange={handleChange("syncInventory")}
                             />
                             <Banner tone="info">
@@ -392,7 +392,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <Text as="h3" variant="headingSm">Product Pages</Text>
                                 <Checkbox
                                     label='Hide "Buy Now" Button When Preorder is Active for the Selected Variant.'
-                                    checked={settings.hideBuyNow}
+                                    checked={!!settings.hideBuyNow}
                                     onChange={handleChange("hideBuyNow")}
                                 />
                             </BlockStack>
@@ -401,17 +401,17 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <Text as="h3" variant="headingSm">Collection Pages</Text>
                                 <Checkbox
                                     label="Display Badges on Homepage and Collection Pages. [Paid Only]"
-                                    checked={settings.badgesOnCollection}
+                                    checked={!!settings.badgesOnCollection}
                                     onChange={handleChange("badgesOnCollection")}
                                 />
                                 <Checkbox
                                     label="Only Show Badge on Product if Preorder is Active for all Variants. [Paid Only]"
-                                    checked={settings.badgeOnProduct}
+                                    checked={!!settings.badgeOnProduct}
                                     onChange={handleChange("badgeOnProduct")}
                                 />
                                 <Checkbox
                                     label="Display Preorder Buttons on Homepage and Collection Pages. [Paid Only]"
-                                    checked={settings.buttonsOnCollection}
+                                    checked={!!settings.buttonsOnCollection}
                                     onChange={handleChange("buttonsOnCollection")}
                                 />
                                 <Text as="p" tone="subdued">
@@ -423,7 +423,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <Text as="h3" variant="headingSm">Product Quickviews</Text>
                                 <Checkbox
                                     label="Quickview Support Enabled [Paid Only]"
-                                    checked={settings.quickviewSupport}
+                                    checked={!!settings.quickviewSupport}
                                     onChange={handleChange("quickviewSupport")}
                                 />
                             </BlockStack>
@@ -446,19 +446,19 @@ export default function DefaultTab({ settings, onChange }: Props) {
                         <BlockStack gap="400">
                             <TextField
                                 label="Cart Label Text"
-                                value={settings.cartLabelText}
+                                value={settings.cartLabelText || ""}
                                 onChange={handleChange("cartLabelText")}
                                 autoComplete="off"
                             />
                             <TextField
                                 label="Cart Label Key"
-                                value={settings.cartLabelKey}
+                                value={settings.cartLabelKey || ""}
                                 onChange={handleChange("cartLabelKey")}
                                 autoComplete="off"
                             />
                             <Checkbox
                                 label="Show Cart Additional Checkout Buttons"
-                                checked={settings.showAdditionalButtons}
+                                checked={!!settings.showAdditionalButtons}
                                 onChange={handleChange("showAdditionalButtons")}
                             />
                         </BlockStack>
@@ -485,12 +485,12 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             </Banner>
                             <Checkbox
                                 label="Prevent Customers from Ordering More than the Preorder Stock Available"
-                                checked={settings.preventOrdering}
+                                checked={!!settings.preventOrdering}
                                 onChange={handleChange("preventOrdering")}
                             />
                             <TextField
                                 label="Insufficient Preorder Stock Remaining Message"
-                                value={settings.insufficientStockMsg}
+                                value={settings.insufficientStockMsg || ""}
                                 onChange={handleChange("insufficientStockMsg")}
                                 multiline={2}
                                 autoComplete="off"
@@ -505,12 +505,12 @@ export default function DefaultTab({ settings, onChange }: Props) {
                             </Banner>
                             <Checkbox
                                 label="Notify Customers When Part of Their Order will be on Preorder"
-                                checked={settings.notifyCustomers}
+                                checked={!!settings.notifyCustomers}
                                 onChange={handleChange("notifyCustomers")}
                             />
                             <TextField
                                 label="Part of Order will be on Preorder Message"
-                                value={settings.partOrderMsg}
+                                value={settings.partOrderMsg || ""}
                                 onChange={handleChange("partOrderMsg")}
                                 multiline={2}
                                 autoComplete="off"
@@ -537,7 +537,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                         <BlockStack gap="400">
                             <Checkbox
                                 label="Display a Pop-up Warning on the Cart Page When Shoppers Have Both Preorder and In-stock Items in the Same Cart."
-                                checked={settings.mixedCartWarning}
+                                checked={!!settings.mixedCartWarning}
                                 onChange={handleChange("mixedCartWarning")}
                             />
                         </BlockStack>
@@ -560,7 +560,7 @@ export default function DefaultTab({ settings, onChange }: Props) {
                         <Select
                             label="Type of Discount"
                             options={["No Discount", "Fixed Amount", "Percentage"]}
-                            value={settings.discountType}
+                            value={settings.discountType || "No Discount"}
                             onChange={handleChange("discountType")}
                         />
                     </Card>
@@ -586,14 +586,14 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <TextField
                                     label="Start Date"
                                     type="date"
-                                    value={settings.startDate}
+                                    value={settings.startDate || ""}
                                     onChange={handleChange("startDate")}
                                     autoComplete="off"
                                 />
                                 <TextField
                                     label="Start Time"
                                     type="time"
-                                    value={settings.startTime}
+                                    value={settings.startTime || ""}
                                     onChange={handleChange("startTime")}
                                     autoComplete="off"
                                 />
@@ -602,14 +602,14 @@ export default function DefaultTab({ settings, onChange }: Props) {
                                 <TextField
                                     label="End Date"
                                     type="date"
-                                    value={settings.endDate}
+                                    value={settings.endDate || ""}
                                     onChange={handleChange("endDate")}
                                     autoComplete="off"
                                 />
                                 <TextField
                                     label="End Time"
                                     type="time"
-                                    value={settings.endTime}
+                                    value={settings.endTime || ""}
                                     onChange={handleChange("endTime")}
                                     autoComplete="off"
                                 />

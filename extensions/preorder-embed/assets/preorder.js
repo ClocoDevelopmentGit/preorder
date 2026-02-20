@@ -16,6 +16,10 @@
           settings = { ...settings, ...data.settings };
           settings.enablePreorderAll = !!data.settings.enablePreorderAll;
           settings.enabled = data.settings.enabled !== false;
+          
+          // Sensible fallbacks for null/empty fields
+          if (!settings.buttonLabel) settings.buttonLabel = "Pre-Order Now";
+          if (!settings.preorderMessage) settings.preorderMessage = "Your Preorder is available soon";
         }
         if (data.products) preorderProducts = data.products;
       } catch(e) { console.error("[Preorder] Failed to fetch settings:", e); }
@@ -86,7 +90,9 @@
         if (vStatus) {
            isCandidate = vStatus.isOutOfStock && vStatus.canPreorder;
         } else {
-           isCandidate = isTracked ? (!variant.available) : false;
+           // Fallback if API hasn't returned yet: use Shopify's native availability
+           // If enablePreorderAll is on, we are more aggressive in showing it for sold out items
+           isCandidate = (isTracked || settings.enablePreorderAll) ? (!variant.available) : false;
         }
 
         const pId = productData.id.toString();

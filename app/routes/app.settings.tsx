@@ -22,40 +22,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { shop: session.shop },
   });
 
-  return settings || {
-    // defaults if no settings found (though usually there should be)
-    enabled: false,
-    enablePreorderAll: false,
-    buttonLabel: "Preorder Now",
-    preorderMessage: "Your Preorder is available from 25th June",
-    messagePosition: "Below Button",
-    shopTimezone: "GMT-05:00",
-    selectedTheme: "default",
-    selectors: JSON.stringify({ // defaults for selectors
-      cartSubtotal: "",
-      checkoutButton: "",
-      formSelector: "form[action^='/cart/add']",
-      buttonSelector: "form[action^='/cart/add']:first [type=submit]:visible",
-      productPageImage: "div.product-single__photos:first,#slider-product-template",
-      collectionPageGrid: "",
-      variantSelector: "form[action^='/cart/add']:first select:visible, .radio",
-      partialPreorderNotice: "",
-      mutationIds: "",
-      mutationClasses: "",
-      lineItemOriginalPrice: "",
-      lineItemTotalPrice: "",
-      ajaxLineItemOriginalPrice: "",
-      ajaxLineItemTotalPrice: "",
-      ajaxCartItemKey: "",
-      productPagePrice: "",
-      notifyAlertButton: "",
-      productLinkSelector: "a[href*='/products/']:visible",
-      productLinkSelectorFilter: "img",
-      productContainerHandle: "a[href*='products/{{handle}}']",
-      productContainerHandleFilter: "img",
-      productContainerHandleSecondFilter: "div, li, article, figure",
-    })
-  };
+  if (!settings) {
+    return {
+      enabled: false,
+      enablePreorderAll: false,
+      buttonLabel: "Preorder Now",
+      preorderMessage: "Your Preorder is available from 25th June",
+      messagePosition: "Below Button",
+      shopTimezone: "GMT-05:00",
+      selectedTheme: "default",
+      selectors: JSON.stringify({
+        formSelector: "form[action^='/cart/add']",
+        buttonSelector: "form[action^='/cart/add']:first [type=submit]:visible",
+        variantSelector: "form[action^='/cart/add']:first select:visible, .radio",
+      })
+    };
+  }
+
+  // Sanitize all fields to prevent "null" or literal null showing in text inputs
+  const sanitized: any = { ...settings };
+  Object.keys(sanitized).forEach(key => {
+    if (sanitized[key] === null || sanitized[key] === undefined || sanitized[key] === "null") {
+      // Special defaults for certain fields
+      if (key === 'buttonLabel') sanitized[key] = "Pre-Order Now";
+      else if (key === 'preorderMessage') sanitized[key] = "Your Preorder is available from 25th June";
+      else if (typeof sanitized[key] !== 'boolean') sanitized[key] = "";
+    }
+  });
+
+  return sanitized;
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

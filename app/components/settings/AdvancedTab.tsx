@@ -37,7 +37,7 @@ export default function AdvancedTab({ settings, onChange }: Props) {
                         </BlockStack>
                     </Box>
 
-                    <Card background="bg-surface" padding="400" borderRadius="300">
+                    <Card background="bg-surface" padding="400">
                         <BlockStack gap="400">
                             <Select
                                 label="Shop Timezone"
@@ -75,7 +75,7 @@ export default function AdvancedTab({ settings, onChange }: Props) {
                                     { label: "(GMT+12:00) Auckland, Wellington", value: "GMT+12:00" },
                                     { label: "(GMT+13:00) Nuku'alofa", value: "GMT+13:00" },
                                 ]}
-                                value={settings.shopTimezone}
+                                value={settings.shopTimezone || "GMT-05:00"}
                                 onChange={handleChange("shopTimezone")}
                             />
                         </BlockStack>
@@ -97,7 +97,7 @@ export default function AdvancedTab({ settings, onChange }: Props) {
                         </BlockStack>
                     </Box>
 
-                    <Card background="bg-surface" padding="400" borderRadius="300">
+                    <Card background="bg-surface" padding="400">
                         <BlockStack gap="400">
                             <TextField
                                 label="Cart Subtotal"

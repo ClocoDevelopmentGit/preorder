@@ -61,17 +61,17 @@ export default function EmailTab({ settings, onChange }: Props) {
                                     { label: "$200 for 20000 emails", value: "7" },
                                     { label: "$500 for 50000 emails", value: "8" },
                                 ]}
-                                value={settings.monthlyChargeLimit}
+                                value={settings.monthlyChargeLimit || ""}
                                 onChange={handleChange("monthlyChargeLimit")}
                             />
                             <Checkbox
                                 label="BCC Me on Preorder Confirmation Emails"
-                                checked={settings.bccMe}
+                                checked={!!settings.bccMe}
                                 onChange={handleChange("bccMe")}
                             />
                             <TextField
                                 label="Enter BCC Email"
-                                value={settings.bccEmail}
+                                value={settings.bccEmail || ""}
                                 onChange={handleChange("bccEmail")}
                                 autoComplete="off"
                                 helpText="Default BCC email is shop email address"
@@ -100,7 +100,7 @@ export default function EmailTab({ settings, onChange }: Props) {
                             </Banner>
                             <TextField
                                 label="Email Subject Line"
-                                value={settings.emailSubject}
+                                value={settings.emailSubject || ""}
                                 onChange={handleChange("emailSubject")}
                                 autoComplete="off"
                                 helpText="Variables: {{customer_first_name}}, {{customer_last_name}}, {{order_number}}"
@@ -111,7 +111,7 @@ export default function EmailTab({ settings, onChange }: Props) {
                                 <Suspense fallback={<Box minHeight="100px" />}>
                                     <ReactQuill
                                         theme="snow"
-                                        value={settings.emailHeader}
+                                        value={settings.emailHeader || ""}
                                         onChange={handleChange("emailHeader")}
                                         modules={{
                                             toolbar: [
@@ -131,7 +131,7 @@ export default function EmailTab({ settings, onChange }: Props) {
                                 <Suspense fallback={<Box minHeight="100px" />}>
                                     <ReactQuill
                                         theme="snow"
-                                        value={settings.emailLineItem}
+                                        value={settings.emailLineItem || ""}
                                         onChange={handleChange("emailLineItem")}
                                         modules={{
                                             toolbar: [
@@ -151,7 +151,7 @@ export default function EmailTab({ settings, onChange }: Props) {
                                 <Suspense fallback={<Box minHeight="100px" />}>
                                     <ReactQuill
                                         theme="snow"
-                                        value={settings.emailLineFooter}
+                                        value={settings.emailLineFooter || ""}
                                         onChange={handleChange("emailLineFooter")}
                                         modules={{
                                             toolbar: [
@@ -192,7 +192,7 @@ export default function EmailTab({ settings, onChange }: Props) {
                             </Banner>
                             <TextField
                                 label="Sender email address"
-                                value={settings.senderEmail}
+                                value={settings.senderEmail || ""}
                                 onChange={handleChange("senderEmail")}
                                 placeholder="Enter Email Address to Change"
                                 autoComplete="off"
