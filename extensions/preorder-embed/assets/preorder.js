@@ -184,6 +184,8 @@
             </div>
           </div>`;
           
+          btn._preorderMsg = mainText; // Store message for the click handler
+          
           m.innerHTML = iconHtml + textHtml;
           const form = btn.closest('form[action^="/cart/add"]');
           if (form) form.appendChild(m); else if (btn.parentNode) btn.parentNode.insertBefore(m, btn.nextSibling);
@@ -199,13 +201,32 @@
             btn.disabled = true;
             try {
               const vid = getLiveId();
+              const pNote = btn._preorderMsg || "Preorder Item";
               const r = await fetch('/cart/add.js', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items: [{ id: vid, quantity: 1, properties: { '_preorder': 'true' } }] })
+                body: JSON.stringify({ 
+                  items: [{ 
+                    id: vid, 
+                    quantity: 1, 
+                    properties: { 
+                      '_preorder': 'true',
+                      'Preorder Note': pNote 
+                    } 
+                  }] 
+                })
               });
-              if (r.ok) window.location.href = '/cart'; 
-              else { const err = await r.json(); alert("Error: " + (err.description || "Could not add to cart")); span.textContent = oldTxt; btn.disabled = false; }
-            } catch(ex) { alert("Error adding to cart"); span.textContent = oldTxt; btn.disabled = false; }
+              if (r.ok) {
+                // Direct to checkout
+                window.location.href = '/checkout';
+              } else { 
+                const err = await r.json(); 
+                alert("Error: " + (err.description || "Could not add to cart")); 
+                span.textContent = oldTxt; btn.disabled = false; 
+              }
+            } catch(ex) { 
+              alert("Error adding to cart"); 
+              span.textContent = oldTxt; btn.disabled = false; 
+            }
           }, true);
         }
       } catch (err) {
@@ -278,16 +299,27 @@
       _cC = true;
       fetch('/cart.js', { cache: 'no-store' }).then(r => r.json()).then(cart => {
           const preorderIndices = new Set(); let hasPreorder = false;
-          cart.items.forEach((item, idx) => { if (item.properties?.['_preorder'] === 'true' || item.properties?.['_preorder'] === true) { preorderIndices.add(idx); hasPreorder = true; } });
+          cart.items.forEach((item, idx) => { 
+              if (item.properties?.['_preorder'] === 'true' || item.properties?.['_preorder'] === true) { 
+                  preorderIndices.add(idx); 
+                  hasPreorder = true; 
+              } 
+          });
           document.querySelectorAll('[data-index]').forEach(el => {
               const rowIndex = parseInt(el.getAttribute('data-index')) - 1; 
+              const item = cart.items[rowIndex];
               const row = el.closest('.cart-item') || el.closest('.cart__row');
-              if (row) {
-                  const details = row.querySelector('.cart-item__details') || row.querySelector('.cart-item-details'), existing = row.querySelector('.preorder-cart-msg');
+              if (row && item) {
+                  const details = row.querySelector('.cart-item__details') || row.querySelector('.cart-item-details'), 
+                        existing = row.querySelector('.preorder-cart-msg');
+                  
                   if (preorderIndices.has(rowIndex)) {
                       if (details && !existing) {
-                          const msg = document.createElement("div"); msg.className = "preorder-cart-msg";
-                          msg.textContent = settings.preorderMessage; msg.style.cssText = "font-size: 12px; color: #666; margin-top: 4px; font-style: italic; display: block;";
+                          const msgText = item.properties?.['Preorder Note'] || settings.preorderMessage || "Preorder Item";
+                          const msg = document.createElement("div"); 
+                          msg.className = "preorder-cart-msg";
+                          msg.textContent = msgText; 
+                          msg.style.cssText = "font-size: 13px; color: #E60000; margin-top: 4px; font-weight: 600; display: block;";
                           const title = details.querySelector('.cart-item__name, .product-title, h3, a');
                           if (title) title.parentNode.insertBefore(msg, title.nextElementSibling || null); else details.appendChild(msg);
                       }
