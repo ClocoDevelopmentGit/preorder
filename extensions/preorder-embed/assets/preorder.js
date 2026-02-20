@@ -266,7 +266,7 @@
               b.style.cssText = "position: absolute; top: 12px; left: 12px; z-index: 5; background: #8CA0AA; color: #fff; padding: 4px 10px; border-radius:0px 6px 6px 0px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none;";
               media.appendChild(b);
             }
-          }
+          } 
         } catch (e) {
           // Silent fail for individual cards to keep script running
         }

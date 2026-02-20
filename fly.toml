@@ -15,7 +15,7 @@ primary_region = 'bom'
   SHOPIFY_APP_URL = 'https://preorder.fly.dev'
 
 [deploy]
-  release_command = "npm run setup"
+  release_command = "npx prisma db push"
 
 [processes]
   app = 'npm run start'
